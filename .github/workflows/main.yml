@@ -11,6 +11,9 @@ jobs:
       - name: Download source
         uses: actions/checkout@v4
 
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
       - name: Restore NuGet packages
         shell: cmd
         run: |
