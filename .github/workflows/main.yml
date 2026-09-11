@@ -1,0 +1,35 @@
+name: Build ApplicationLoopback
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore packages
+        shell: cmd
+        run: |
+          nuget restore loopback\helper\ApplicationLoopback.vcxproj
+
+      - name: Build x64
+        shell: cmd
+        run: |
+          msbuild loopback\helper\ApplicationLoopback.vcxproj ^
+            /m ^
+            /p:Configuration=Release ^
+            /p:Platform=x64
+
+      - name: Find output
+        shell: powershell
+        run: |
+          Get-ChildItem -Path . -Recurse -Filter ApplicationLoopback.exe
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: ApplicationLoopback-x64
+          path: '**/ApplicationLoopback.exe'
