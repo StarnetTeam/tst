@@ -1,6 +1,7 @@
 #include <shlobj.h>
 #include <wchar.h>
 #include <iostream>
+#include <vector>
 #include <audioclientactivationparams.h>
 
 #include "LoopbackCapture.h"
@@ -347,16 +348,17 @@ HRESULT CLoopbackCapture::OnAudioSampleRequested()
         RETURN_IF_FAILED(m_AudioCaptureClient->GetBuffer(&Data, &FramesAvailable, &dwCaptureFlags, &u64DevicePosition, &u64QPCPosition));
 
 
-        // Write File
-        if (m_DeviceState != DeviceState::Stopping)
-        {
-            DWORD dwBytesWritten = 0;
-            RETURN_IF_WIN32_BOOL_FALSE(WriteFile(
-                GetStdHandle(STD_OUTPUT_HANDLE),
-                Data,
-                cbBytesToCapture,
-                &dwBytesWritten,
-                NULL));
+            // Write raw PCM; WASAPI may signal a silent packet with a null Data pointer.
+            if (m_DeviceState != DeviceState::Stopping)
+            {
+                DWORD dwBytesWritten = 0;
+                std::vector<BYTE> silence;
+                if (dwCaptureFlags & AUDCLNT_BUFFERFLAGS_SILENT)
+                {
+                    silence.resize(cbBytesToCapture, 0);
+                    Data = silence.data();
+                }
+                RETURN_IF_WIN32_BOOL_FALSE(WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), Data, cbBytesToCapture, &dwBytesWritten, NULL));
         }
 
         // Release buffer back
