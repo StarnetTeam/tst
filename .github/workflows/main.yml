@@ -8,22 +8,26 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Download source
+        uses: actions/checkout@v4
 
-      - name: Restore packages
+      - name: Restore NuGet packages
         shell: cmd
         run: |
-          nuget restore loopback\helper\ApplicationLoopback.vcxproj
+          nuget restore loopback\helper\packages.config ^
+            -PackagesDirectory loopback\helper\packages ^
+            -NonInteractive
 
-      - name: Build x64
+      - name: Build ApplicationLoopback
         shell: cmd
         run: |
           msbuild loopback\helper\ApplicationLoopback.vcxproj ^
             /m ^
             /p:Configuration=Release ^
-            /p:Platform=x64
+            /p:Platform=x64 ^
+            /p:RestorePackagesConfig=false
 
-      - name: Find output
+      - name: Find generated executable
         shell: powershell
         run: |
           Get-ChildItem -Path . -Recurse -Filter ApplicationLoopback.exe
